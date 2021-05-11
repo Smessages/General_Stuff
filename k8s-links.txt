@@ -1,0 +1,32 @@
+##AWS EKS - Create Kubernetes cluster on Amazon EKS | the easy way
+
+https://www.youtube.com/watch?v=p6xDCz00TxU
+
+##How to setup a Kubernetes cluster on AWS EKS using eksctl | Amazon EKS explained
+Step by Step Application Deployment on LKE using Helm 
+
+https://www.youtube.com/watch?v=JGtJj_nAA2s&t=0s
+
+Full Kubernetes and Docker tutorial              ►  https://bit.ly/2YGeRp9​
+DevOps Tools, like Terraform, Prometheus  ►  https://bit.ly/2W9UEq6​
+Jenkins Pipeline Tutorials                               ►  https://bit.ly/2Wunx08
+
+
+https://www.youtube.com/watch?v=sH-trYwjkkY
+https://www.youtube.com/watch?v=cvziZliY-AI
+
+
+----------------
+Why Pods fail
+----------------
+https://www.youtube.com/watch?v=PM1LUZi8yLE
+
+1. Startup failure - containers do not start
+	Observer the Pods  -- > kubectl get pods
+	Check events related to Pods  --> kubectl describe pod <pod_name>
+	Modify the necessary information in the pod  --> kubectl edit pod <pod_name>
+	
+	
+	
+2. Runtime failure - the application code fails after the container starts up
+3. 

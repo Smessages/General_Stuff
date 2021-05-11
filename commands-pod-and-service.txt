@@ -1,0 +1,53 @@
+kubectl get pods --all-namespaces
+
+sudo yum install git
+
+git clone https://github.com/dhiman-halder/eks
+
+cat nginx-pod.yaml 
+
+kubectl apply -f nginx-pod.yaml
+
+kubectl get pods
+
+kubectl describe pod nginx
+
+kubectl get pods --show-labels
+
+kubectl get pods -l app=nginx
+
+kubectl get pods -o wide
+
+kubectl label pods -l app=nginx tier=fe
+
+kubectl edit pod nginx 
+
+kubectl logs nginx
+
+kubectl exec -it nginx -- sh
+
+cat /etc/nginx/nginx.conf
+
+----------------------
+Kubernetes Service
+----------------------
+
+3 Types of Services
+- ClusterIP : reachable from only within the cluster
+- LoadBalancer : exposed over an external load balancer, ex: ELB
+- NodeIP : reachable from an exposed Node port (NodeIP: Port)
+
+kubectl apply -f nginx-service.yaml
+
+kubectl get service
+
+copy the external IP and try it out of the terminal
+ 
+curl <externalIPaddress>
+
+Note: if it did not work, go to AWS console, EC2, and go to LoadBalancer, select the LoadBlanacer and click on the Instances Tab below to confirm the status of the LoadBalancer, the status should be (InService). Also modify the Security Group of the EC2 instances and add ALL TRAFFIC rule to the Inboud and open it up.
+
+
+kubectl delete pod nginx
+
+kubectl delete service nginx
