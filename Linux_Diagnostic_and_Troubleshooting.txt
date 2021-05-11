@@ -1,0 +1,620 @@
+https://www.youtube.com/watch?v=fqMOX6JJhGo&t=5679s
+
+
+--------------------------------
+Troubleshooting login issue
+--------------------------------
+Try and access the said server by loggin in with root access
+
+# lastlog -u john  --> confirm the last time user logged in
+# getent passwd john --> to inspect the user details
+
+- Collecting system information to aid troubleshooting
+- Using system Journal
+   # journalctl -b -1  --->  to get boot message
+   # journalctl --list-boots
+
+
+
+----------------------------
+Using RedHat Resources
+----------------------------
+    - redhat-support-tool
+    - sosreport
+- Troubleshoot FTP connectivity between two servers
+
+Monitoring Systems
+- System Monitoring with Cockpit
+- Performance Co-pilot or PCP
+- Centralized log server with Rsyslog
+- Intrusion detection software to monitor changes
+- System Auditing with auditd
+
+
+---------------------
+Configure Cockpit
+---------------------
+runs on port 9090
+
+# yum install cockpit -y
+# systemctl start cockpit
+# systemctl enable cockpit
+# systemctl status cockpit
+# systemctl status firewalld
+# firewall-cmd --list-all
+# firewall-cmd --add-service=cockpit --permanent
+# firewall-cmd --reload
+# firewall-cmd --list-all
+
+Next go to web browser
+https://192.168.1.184:9090/
+Username: root
+Password: your-root-password
+
+
+-------------------------
+Performance Co-Pilot (PCP)
+-------------------------
+Collect and query data from various sub-systems, managing volumes of servers and their is issue of latency on some of these servers. PCP will assist in getting detailed information in collating data that will help to resolve this issue
+
+# yum -y install pcp
+# systemctl start pmcd  (performance metric clooector deamon)
+# systemctl status pmcd
+# systemctl enable pmcd
+# pmstat -s 5  (will display info with interval of 5 secs)
+# pminfo
+# pminfo -dt disk.dev.util
+# pminfo -dt proc.nprocs
+# pmval -s 5 pron.nprocs
+# pmval -s 5 proc.nprocs
+
+Just to get historical data of previous day events
+# systemctl start pmlogger
+# cd /var/log/pcp/pmlogger
+# ls -l
+# cd dockerhost/   --> <hostname>
+# ls -l  --> then you can check the log files by the date
+
+
+----------------------------------------
+Centralized Log Server with Rsyslog
+----------------------------------------
+Having a dedicated server anf logging all the activities on other client servers. rsyslog is the default logging program in Debian and Red Hat. Just like syslogd, the rsyslogd daemon can be used to gather log messages from programs and servers and direct those messages to local log files, devices, or remote logging hosts.
+
+Configure Rsyslog
+
+# rpm -qa | grep -i rsyslog
+# systemctl is-active rsyslog
+# systemctl is-enabled rsyslog
+# ls -l /etc/rsyslog.conf
+# cd /var/log
+# ls -ltr
+# vi /etc/rsyslog.conf
+and un-comment the followings:
+
+ Provides UDP syslog reception
+$ModLoad imudp
+$UDPServerRun 514
+
+ Provides TCP syslog reception
+$ModLoad imtcp
+$InputTCPServerRun 514
+
+then insert the below line under   ###RULES###
+
+#### RULES ####
+
+$template MyruleFile,"/var/log/loghost/%HOSTNAME%/%cron.log"
+cron.*  ?MyruleFile
+
+also at the end of the file
+
+# ### end of the forwarding rule ###
+*.* @192.168.1.184
+
+save and quit
+
+# systemctl restart rsyslog
+# ss -tulpn | grep -i 514    --> check if the port is listening
+# firewall-cmd --list-all
+# firewall-cmd --add-port=514/tcp --permanent
+# firewall-cmd --reload
+# firewall-cmd --list-all
+# cd /var/log
+# ls -ltr
+# cd loghost
+
+
+
+---------------------------------
+Intrusion Detection Software - AIDE
+---------------------------------
+AIDE (Advanced Intrusion Detection Environment) is a small yet powerful, free open source intrusion detection tool, that uses predefined rules to check file and directory integrity in Unix-like operating systems such as Linux. It is an independent static binary for simplified client/server monitoring configurations.
+
+System stability is put at risk when configuration files are deleted or modified without authorization or careful supervision. How can a change to an important file or directory be detected? This problem can be solved by using intrusion detection software to monitor files for changes.
+
+
+It checks the integrity of File & Directory.
+AIDE is a Security tool to protect the system against malwares, virus, and detection of unathorized activities happening on the system.
+
+LAB Setup
+
+# yum -y install aide
+# vi /etc/aide.conf   ---> the configuration file --> to check the configuration etc
+
+Let's create a database to collect information (rules) create a snapshot of what is exactly on the file and keep, in case anything changes happens to the file or directory, it will compare the present state with the previous state.
+# aide --init
+
+database will be created in /var/lib/aide/aide.db.new.gz
+need to move it to a secure location and make it read-only and rename it
+
+# mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
+# aide --check   --> to check for any changes
+
+Let's make some changes and check again
+# vi /etc/abc.txt  --> put in random data and save it.
+# aide --check  --> to check again
+
+
+To update database to include any legitimate changes
+# aide --update
+
+# mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz  --> to move it again and the new database will include the new addition
+
+# aide --check    --> to check again
+
+Let's try change something else, #cd /root
+# chmod 777 <anyfile>
+# aide --check
+
+
+
+
+--------------------------------
+System Auditing with auditd
+--------------------------------
+Linux audit allows you to comprehensively log and track access to files, directories, and resources of your system, as well as trace system calls. It enables you to monitor your system for application misbehavior or code malfunctions. 
+
+By default the Linux audit framework logs all data in the /var/log/audit directory. Usually this file is named audit.log (/var/log/audit/audit.log)
+
+How to create a watchlog/watchrule
+# auditctl -w /etc/ -p w -k etc_content
+# auditctl -w /etc/ -p a -k etc_attribute
+
+Make it permanent
+# vi /etc/audit/rules.d/audit.rules  ---> and add the followings at the end:
+
+-w /etc/ -p w -k etc_content
+-w /etc/ -p a -k etc_attribute
+save it
+
+Copy a file to test it
+# cp /etc/shadow /etc/shadow.copy
+# chmod +r /etc/shadow.copy
+
+Do audit search
+# ausearch -i -k etc_content
+# ausearch -i -k etc_attribute
+
+You can remove rules
+#auditctl -D
+
+
+
+-------------------------------
+IDENTIFY HARDWARE ISSUES
+-------------------------------
+- Identifying various hardware connected on your system and their related problems.
+- Manage kernel modules, drivers & their parameters
+- Managing Virtualization Issues.
+
+Identifying Hardware Issues
+
+>CPU
+# lscpu  
+# cat /proc/cpuinfo
+
+>Memory
+# cat /proc/meminfo
+
+>Various Sub-system Info
+# dmidecode
+# dmidecode -t memory   ---> for memory details
+
+>Disk Info
+# lsscsi -v
+you can use hdparm as well
+# yum -y install hdparm
+# hdparm
+# hdparm -I /dev/sda
+
+PCI Hardware/Storage
+# lspci
+# lsusb -v
+
+
+---------------------------------------------
+Hardware Error Reporting with - mcelog
+---------------------------------------------
+mcelog - machine check exceptions
+
+mcelog logs and accounts machine checks (in particular memory, IO, and CPU hardware errors) on modern x86 Linux systems. 
+
+mcelog is required by both 32bit x86 Linux kernels (since 2.6.30) and 64bit Linux kernels (since early 2.6 kernel releases) to log machine checks and should run on all Linux systems that need error handling. 
+
+All errors are logged to /var/log/mcelog or syslog or the journal. 
+
+For memory errors it supports modern x86 systems with integrated memory controllers; for CPU errors all modern x86 systems are supported. 
+
+Identifying various hardware connected on your system and their related problems.
+
+How do I view error logs?
+
+# yum -y install mcelog
+# systemctl status mcelog
+# systemctl enable mcelog
+# journalctl -u mcelog.service
+
+
+Use tail or grep command:
+# tail -f /var/log/mcelog
+OR
+# grep -i "hardware error" /var/log/mcelog
+OR
+# grep -c "hardware error" /var/log/mcelog
+
+
+------------
+rasdaemon
+------------
+rasdaemon is a more modern replacement for mcelog that hooks into the kernel trace subsystem. RAS stands for Reliability, Availability, and Serviceability. rasdaemon hooks into the Error Detection And Correction (EDAC) mechanism for DIMM modules and reports them to user space, and also the RAS messages that come from the kernel tracing subsystem.
+
+
+# yum -y install rasdaemon
+# systemctl enable rasdaemon
+# systemctl start rasdaemon
+# systemctl status rasdaemon
+
+# ras-mc-ctl --status
+# ras-mc-ctl --errors
+
+
+
+-------------------
+Memory Testing - memtest86+
+------------------
+When a physical memory error is suspected, an administrator might want to run an exhaustive memory test. In these cases, the memtest86+ package can be installed.
+
+# yum -y install memtest86+
+# memtest-setup
+# grub2-mkconfig -o /boot/grub2/grub.cfg
+# reboot and select the memtest and the grub phase
+press f1  ---> to commence the memory test to know which memory slot is having issue
+
+
+------------------------
+MANAGING KERNEL MODULES
+------------------------
+The Linux kernel has large parts of its functionality split out into modules, small pieces of code that can be loaded and unloaded at will. This helps keeps the base kernel image smaller, so that only code that is actually needed is loaded in memory.
+
+# lsmod   -->  Show the status of modules in the Linux Kernel
+# cd /sys/module  --> location to find all the modules
+# ls -l
+# lsmod | grep -i e1000
+# modinfo  <module> --> to detail about any module
+# modprobe <module>  ---> load modules  # modprobe st
+# cd /lib/modules
+# ls -l
+# cd 3.10.0-862.el17
+# ls -l
+# cd kernel
+# ls -l  ---> to see kernel's different modules (drivers)
+
+
+-------
+dmesg
+-------
+dmesg command also called as “driver message” or “display message” is used to examine the kernel ring buffer and print the message buffer of kernel. The output of this command contains the messages produced by the device drivers.
+
+When the computer boots up, there are lot of messages(log) generated during the system start-up.
+So you can read all these messages by using dmesg command. The contents of kernel ring buffer are also stored in /var/log/dmesg file.
+
+The dmesg command can be useful when system encounters any problem during its start-up, so by reading the contents of dmesg command you can actually find out where the problem occurred(as there are many steps in system boot-up sequence).
+
+# dmesg | less
+
+
+Module Options
+
+
+
+----------------------------------
+Troubleshooting Storage Issues
+----------------------------------
+Linux Storage Stack
+
+Troubleshooting storage issues in Red Hat Enterprise Linux should start with an understanding of how I/O is passed from applications through the Linux storage stack to storage devices.
+
+
+
+
+-----------------------------------
+Troubleshoot & Fix RPM Issues
+-----------------------------------
+Resolve package dependencies
+
+When an RPM Package requires functionality and that is provided by another package then one package gets dependent on other. The rpm command does not resolve these dependencies. The yum command resolves dependencies and uses rpm to install or erase a package.
+
+When diagnosing RPM dependency issues, the system logs are not very helpful. In addition to the RPM database, 
+** /var/log/yum.log    --->   log contains a history of installed and erased packages.
+
+Displaying package dependencies
+# yum deplist yum
+# yum deplist <package_name>   e.g  # yum deplist tree
+or
+# rpm -q --requires <package_name>   e.g   # rpm -q --requires vsftp
+
+Resolve Package Dependencies
+For example, you need to install a particular package that depend on other packages, say you need to install package A which depend on package B to function, the the required version of package B to support package A is v1.0, but unfortunately, you have package B v2.2 on the system and sometimes these packages are version-specifics to work properly, so in this case, v2.2 will not work and will throw error message.
+
+Solution:
+You may need to downgrade dependencies from the higher version to the required lower version
+# yum -y downgrade <dependency_package_name>
+then retry the installation of the package A and it should be fine.
+
+Note: another important thing is, you may need to upgrade the downgraded package to its original state so to function in it's own capacity again. Let's say the upgrade is throwing error base on the previuos downgrade task on it or some other database in dependent on it or something else, you can lock the version, and this means a new version will available in your repository even though it will not upgrade the package. Though you can use yum update to automatically update all package versions but you may need to retain the downgraded version, so yum update all will not be the best.
+
+Let's see how it work:
+# rpm -qa | grep -i vsftp   ---> to get the package version
+# yum list vsftp
+
+You will need to install a plugin to lock the version
+# yum -y install yum-plugin-versionlock
+# yum versionlock list   ---> to see the locked versions available but the package version to be locked will not be added automatically, you will need to add it manually
+# yum versionlock <package_name>
+# yum versionlock list
+# yum versionlock delete <package_name>   --> to remove the locked package
+
+
+-----------------------------------
+Recovering a Corrupt RPM Database
+-----------------------------------
+ # lsof | grep /var/lib/rpm
+
+
+
+
+------------------------------------------
+Transaction History using Yum Command
+------------------------------------------
+Yum (Yellowdog Update Modified) is RPM Packet Management system for Fedora, CentOS, Red Hat, OpenSuse etc. Yum history (list, info, summary, repeat, redo, undo, new) commands is added on 3.2.25 version. So this works every Linux Distros, which uses yum 3.2.25 or newer. Yum history command is a really useful in situations where the need to example rollback latest yum activity or undelete some deletes or just see what is updated lately.
+
+The yum history command contains several subcommands that are available to use. Here is a brief list of what these subcommands can do.
+
+Info - Provides detailed information about the last update or the update ID you specify.
+List - Provides a list of the past updates.
+Packages-list - Takes a package name, and provides a list of all the update IDs where that package was accessed.
+Packages-info - Takes a package name and provides the historic update information on that package for the current server.
+Summary - The summary provides an overview of all the transactions that have happened over the last three months.
+Addon-info - View any additional information about a transaction ID.
+Redo - This command repeats the work completed in a particular transaction ID.
+Undo - This command reverses the earlier work done in a specific transaction ID.
+Rollback - This command rolls back the RPM’S to their previous configuration. This option can operate on multiple transactions to roll back instead of a single ID.
+New - Wipes out the current yum history to provide a fresh, blank history file. (Only use this if you have a problem with yumdb/rpmdb.)
+Sync - Updates the rpmdb/yumdb data stored for any installed packages to what is current in the repo.
+Stats - Provides statistics about the current history DB.
+
+
+# yum history list
+# yum history list all
+# yum history info <id>
+
+
+##################################################################33333
+
+-------------------------------------
+Troubleshooting Network Issues
+-------------------------------------
+ping command used to test the connectivity of the system (system to system, webserver etc)
+
+# ping <ipdaddress>
+# ping -i 3 <hostname>  ---> send icmp in the interval of 3 seconds
+# ping -c4 google.com
+
+
+--------------------------
+Sanning Network Ports
+-------------------------
+Nmap is a tool used for determining the hosts that are running and what services the hosts are running. Nmap can be a valuable diagnostic tool for network administrators.
+
+The Nmap is an open source and a very versatile tool for Linux system/network administrators. Nmap is used for exploring networks, perform security scans, network audit and finding open ports on remote machine. It scans for Live hosts, Operating systems, packet filters and open ports running on remote hosts.
+
+# yum install nmap -y
+# nmap <hostname>  --> will scan the server with the hostname and give report on the networking state of the server like latency level, ip address, services and ports
+# nmap 192.168.1.79 192.168.1.80 192.168.1.81
+
+
+--------------------------------
+Communicating with a Remote Service
+--------------------------------
+NCAT
+A troubleshooting tool that allows an administrator to communicate with a service directly is Ncat. Ncat can use either TCP and UDP to communicate with a network service, and it also supports SSL communication. Ncat is invoked as either the nc or ncat commands. The nmap-ncat package of Red Hat Enterprise Linux provides the Ncat utility.
+
+# nc <hostname> 25
+
+
+-----------------------------------
+Network Monitoring Utility  (iptraf-ng)
+-----------------------------------
+Another Networking monitoring tool which is easy to use, to monitor the inbound and outbound network traffic passing through the system's interface
+# yum install iptraf-ng
+# iptraf-ng
+select appropriate choice and use ESC to go back
+
+
+--------------------
+Network Manager
+--------------------
+
+# nmcli
+# nmcli dev status
+# nmcli con show  -->  shows list of connections on the system
+# ap addr  show
+
+
+
+------------------------------
+TCPDUMP - Capturing Packets with tcpdump
+------------------------------
+Tcpdump is a command line utility that allows you to capture and analyze network traffic going through your system. It is often used to help troubleshoot network issues, as well as a security tool.
+
+A powerful and versatile tool that includes many options and filters, tcpdump can be used in a variety of cases. Since it's a command line tool, it is ideal to run in remote servers or devices for which a GUI is not available, to collect data that can be analyzed later. It can also be launched in the background or as a scheduled job using tools like cron.
+
+Scenario
+Say you are woking in an environment and you have a server-A and on server-A, some applications are running and lot of users are connetected to the server through the applications, and their is server-B which is the database server of the application that is running on server-A.
+
+Assume the users connected to this applications reportslow response incidents on the application, latency issues. So as the administrator, you get those tickets, and when you get those tickets in, the first thing that should happen is to do some health-check on server-A that is hosting the applications (CPU, Memory & Disk utilization, Load Average etc). If you didn't find any issue, the next is to talk to the Application team about your findings and they may be able to tell you if the database server connected to the application server. 
+
+Once you get that information, you need to log in to server-B which is the database server and do the same health-check on this server as well, suppose you couldn't detect any issue and everything seems to be fine, in that case you will have to involve the Network Team about the issue because these servers are connect via switvh and other networking devices, so Networking Team will be able to trace and detect if their is any packet loss in the connection of this is having any sort of connectivity issue. 
+
+Network team may need to get some information you as SysAdmin, like capturing the packets on the servers, so in that case, tcpdump command in the picture. Many times you are working on any outage and any latency issue on the server, it may require you to capture some packet during a specific period of time. So you need to capture these packets on and network interface and send it over to the Networking team for analysis.
+
+
+------Lab
+# ip link show  ---> display all network interface in Linux system
+# nmcli device status  ---> list available network interfaces and status
+# nmcli connection show
+# netstat -i   ---> show a table of all network interfaces using netstat command in Linux
+# tcpdump -i enp0s3  ---> capture packets from specific interface
+# tcpdump -n -i enp0s3
+# tcpdump -c 5 -i enp0s3  ---> capture ony certain number of packets
+# tcpdump -w <filename> -i <interface_name>  ---> to capture packets in a specific file in encrypted format
+# tcpdump -w 0001.pcap -i enp0s3
+# ls -l  --> to check the file
+# tcpdump -r <filename>  --> to read the file
+# tcpdump -n -i enp0s3 tcp   ---> capture only TCP packets
+# tcpdump -n -i enp0s3 port 22  ---> capture only from specific port
+
+Note:
+A packet is a small amount of data sent over a network, such as a LAN or the Internet. Similar to a real-life package, each packet includes a source and destination as well as the content (or data) being transferred. Packets can be a fixed size, such as 1,000 or 1,500 bytes, or variable sizes, depending on the system
+
+
+##################################################################
+
+https://www.youtube.com/watch?v=EGoCyuZuIe4
+https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-LAMP.html
+https://medium.com/@as.vignesh/install-mysql-on-amazon-linux-in-aws-ec2-e31a842f7ae9
+
+
+-------------------------------------------------------
+Troubleshooting web server issues using log files
+-------------------------------------------------------
+Firstly try and query the website and see if it is accessible from the web server
+
+# elinks --dump http://website.html  --> to query the website, to see if it's accessible on the webserver
+
+Login to the webserver to try some commands to query the logs
+# cd /var/log/httpd
+# ls -l
+
+confirm if it is access issue or permission issue:
+# grep website.html access_log
+# tail -f error_log
+# cd /var/www/hmtl
+# ls -l  --> to check the permission of the html file
+# chmod 644 website.html   --> to change the permission for others to access
+# elinks --dump http://website.html   --> try accessing it again
+# cd /var/log/httpd  -->  to check the log files again
+# tail -f error_log
+
+Check if it is a denial from SELinux
+# ausearch -i -m avc -ts today  --> to find out any SELinux related denial errors
+# getenforce  -->  to check if selinux status, whether it is enabled or not
+# pwd
+# cd /var/www/html
+# ls -ltrZ  --> to check SELinux details on a file, if it is showing :var_t:s0
+# cd ..
+# ls -ltrZ html/  --> to confirm :var_t:
+# ls -ltrZd www/  --> to confirm :var_t:
+Normally it should be showing :httpd_sys_content_t:
+
+Let's fix it now:
+# cd html
+# chcon -t  httpd_sys_content_t  website.html
+OR
+# restorecon -Rv  /var/www
+# ls -ltrZ  --> to confirm the changes
+
+Now let's try to access the website again using elinks
+# elinks --dump http://website.html
+
+
+---------------------------------------------------------------------
+Troubleshooting Web Servers, Databases, and Other Services
+---------------------------------------------------------------------
+1. Check if the Service is Running
+systemctl status httpd
+service httpd status
+systemctl list-unit-files | grep httpd
+
+2. Restart the Service
+systemctl restart httpd
+
+3. Enable the Service
+systemctl enable httpd
+
+4. Check your Service’s Bound IP Address and Ports
+Your service may be listening on an unexpected port, or it may not be bound to your public IP address
+
+ss -atpu
+
+5. Analyze Service Logs
+If your service doesn’t start normally, review your system logs for the service. Your system logs may be in the following locations:
+
+journalctl
+cat /var/log/messages
+
+6. Review Firewall Rules
+iptables -L
+firewall-cmd --state
+
+7. Disable Firewall Rules
+In addition to analyzing your firewall ruleset, you can also temporarily disable your firewall to test if it is interfering with your connections. Leaving your firewall disabled increases your security risk, so we recommend re-enabling it afterward with a modified ruleset that will accept your connections.
+
+--Create a temporary backup of your current iptables:
+sudo iptables-save > ~/iptables.txt
+
+--Set the INPUT, FORWARD and OUTPUT packet policies as ACCEPT:
+sudo iptables -P INPUT ACCEPT
+sudo iptables -P FORWARD ACCEPT
+sudo iptables -P OUTPUT ACCEPT
+
+--Flush the nat table that is consulted when a packet that creates a new connection is encountered:
+sudo iptables -t nat -F
+
+--Flush the mangle table that is used for specialized packet alteration:
+sudo iptables -t mangle -F
+
+--Flush all the chains in the table:
+sudo iptables -F
+
+--Delete every non-built-in chain in the table:
+sudo iptables -X
+
+
+Troubleshoot WebServer
+
+grep ErrorLog -r /etc/httpd
+
+WebServer Logs
+- Access Log
+- Error Log
+
+Configuration File
+/etc/httpd/conf/httpd.conf
+
+Log Files Location
+/etc/httpd/logs
+
+# tail -20f access.log
+

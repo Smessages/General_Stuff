@@ -1,0 +1,545 @@
+References:
+https://www.educba.com/what-is-docker-in-linux/?source=leftnav
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-centos-7
+
+-------------------- DOCKER ---------------------------------------------
+
+
+sudo apt-get update
+sudo apt-get install docker.io
+
+sudo usermod -a -G docker Userid (userid can be found by executing command whoami)
+
+
+Docker commands
+
+docker -v (Version of the docker)
+
+
+docker run hello-world
+
+docker image ls
+docker images
+
+docker container ls
+docker ps
+docker ps -a
+
+docker pull alpine
+
+
+docker run -i -t alpine /bin/sh
+
+docker pause container-id/name
+docker unpause container-id/name
+
+docker rm container-id/name
+delete all containers at once
+docker rm $(docker ps -aq)
+
+docker run -i -t --name my_alpine alpine:latest /bin/sh
+
+docker diff container-id/name
+
+docker start exited-container-id/name
+docker attach container-id/name
+
+detaching
+from inside the container
+CTRL+P and Q
+
+stopping
+docker stop container-id/name
+
+Removal of image
+docker rmi image:tag
+
+Store images
+docker save alpine:latest -o my_alpine.tar
+
+docker exec -i -t my_alpine hostname
+
+docker logs container-id/name
+
+
+
+
+CLASS WORK-PROJECT
+
+-------------My SQL example-------------------
+
+git clone https://github.com/SimplilearnDevOpsOfficial/DockerWithMySQL.git
+
+cd DockerWithMySQL
+
+cat README file
+
+>>Create a Volume
+# docker volume create --name monitoring_data
+
+NOTE:
+-p --> to define port
+-d --> to run in detach mode
+-e -->
+-v --> 
+-f --> forcefully
+
+
+
+./runserver_first
+
+# docker ps  --> to see
+# docker logs mysql  --> to check the logs of the container
+# docker ps
+
+# docker inspect mysql  --> give all the item the container is up with
+
+# cat runclient   --> to see the content
+# ./runclient  --> to run the script
+this will give you another prompt means it's taking you into the client container
+
+# mysql -h 172.17.0.3 -u student -p   --> to log into mysql (ip address would be found in logs)
+# enter password: student
+
+./runclient
+mysql -h <ip> -u student -p
+
+
+Run MySQL Commands
+
+mysql> show databases;
+mysql> use monitoring;
+mysql> create table docker(name VARCHAR(20));
+mysql> show tables;
+mysql> select * from docker;
+mysql> insert into docker values('Femi');
+mysql> select * from docker;
+mysql> select count(1) from docker;
+mysql> quit
+
+CTRL+P+Q  --> to exit the container
+
+
+# docker ps -a
+
+System Clean up
+# docker stop $(docker ps -aq)
+# docker rm $(docker ps -aq)
+
+Let's Understand the Docker Volume
+
+# docker volume ls
+# docker volume create OutsideContainer  --> create another volume
+# docker volume ls  --> check listed volumes
+
+Let's invoke alpine image with the help of this volume
+# docker run -i -t -v OutsideContainer:/InsideContainer alpine:latest /bin/sh
+/ # ls
+/ # cd InsideContainer/
+# ls -l
+# touch a.txt b.txt c.conf d.java
+# exit
+# docker ps
+# docker ps -a  --> shows it exited few seconds ago
+
+Note: even after the container have been exited and terminated sort off, the data in the InsideContainer volme still exist because it have been mounted. To confirm this:
+
+# docker inspect OutsideContainer
+[
+    {
+        "CreatedAt": "2021-01-25T19:28:47-06:00",
+        "Driver": "local",
+        "Labels": {},
+        "Mountpoint": "/var/lib/docker/volumes/OutsideContainer/_data",
+        "Name": "OutsideContainer",
+        "Options": {},
+        "Scope": "local"
+    }
+]
+
+
+This shows the path that the files are mounted, to see these files/data
+
+# sudo ls /var/lib/docker/volumes/OutsideContainer/_data   --> will list the content of the folder
+
+>>We can use this to create another container again
+# docker run -i -t -v OutsideContainer:/Extrafiles alpine:latest /bin/sh
+# ls
+
+The above is just a way of doing information/data interchange between containers through Volume.
+
+
+
+Creating your own Docker Image
+
+
+
+-------------------------------DOCKERFILE-----------------------------------
+
+https://takacsmark.com/dockerfile-tutorial-by-example-dockerfile-best-practices-2018/
+
+
+
+A Dockerfile is a text document that contains all the commands a user could call on the command line to assemble an image. Using docker build users can create an automated build that executes several command-line instructions in succession. This page describes the commands you can use in a Dockerfile .
+
+A Dockerfile is a text file that defines a Docker image. You’ll use a Dockerfile to create your own custom Docker image, in other words to define your custom environment to be used in a Docker container.
+
+You’ll want to create your own Dockerfile when existing images don’t satisfy your project needs. This will actually happen most of the time
+
+The Dockerfile contains a list of instructions that Docker will execute when you issue the docker build command. Your workflow is like this:
+
+you create the Dockerfile and define the steps that build up your images
+you issue the docker build command which will build a Docker image from your Dockerfile
+now you can use this image to start containers with the docker run command
+
+Consider this Dockerfile:
+
+FROM ubuntu:18.04
+COPY . /app
+RUN make /app
+CMD python /app/app.py
+
+Each instruction creates one layer:
+
+FROM creates a layer from the ubuntu:18.04 Docker image.
+COPY adds files from your Docker client’s current directory.
+RUN builds your application with make.
+CMD specifies what command to run within the container.
+When you run an image and generate a container, you add a new writable layer (the “container layer”) on top of the underlying layers. All changes made to the running container, such as writing new files, modifying existing files, and deleting files, are written to this thin writable container layer.
+
+
+--------------------------------------LAB PRACTICE--------------------------
+
+------------SAMPLE 1
+
+METHOD 1
+
+First method is using DOCKER FILE which is also the recommended way. To create apache webserver image using DOCKER FILE, we need to follow 6 steps.
+
+Step 1: 
+Make a directory
+#mkdir /test
+#cd /test
+
+Step 2: Now create a file `Dockerfile` (File name is hard coded do not change the file name)
+#touch /test/Dockerfile
+
+Step 3: Create a sample web page with name index.html
+#vim /test/index.html
+
+Step 4: Edit the file using following instructions
+#vi Dockerfile 
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Insight Tech Academy</h1>
+
+<p>Practicing Dockerfile Build.</p>
+
+</body>
+</html>
+
+
+FROM centos:latest
+
+MAINTAINER InsightTech
+
+RUN yum -y install httpd
+RUN yum -y install git
+RUN yum -y install tree
+COPY   index.html /var/www/html/
+CMD   [“/usr/sbin/httpd”, “-D”, “FOREGROUND”]
+EXPOSE   80
+
+Step 5: Build the image using docker build. Test is the directory where Dockerfile is present and –t option is to tag or name the image.
+# docker build . -t webserver:v1
+
+Step 6: Run docker image
+#docker run –dit –p 8080:80 webserver:v1
+
+NOTE:
+Dockerfile Commands
+
+Maintainer — This command is used to give the information about the author or manager who is managing this image.
+
+MAINTAINER InsighTech
+
+RUN — Before building an image if want some configuration that needs to be present in the image. Inside the image we need to install Apache web server image the command to install that image is
+RUN yum –y install httpd
+
+COPY- This command is used to copy a file from host os to docker container
+COPY index.html /var/www/html
+
+EXPOSE- This command is used to specify the port number in which the container is running its process. Anybody can come from outside and connect to this port. Apache webserver is launched at port 80 by default that is why we need to expose container at port 80.
+EXPOSE 80
+
+CMD- To run a command as soon as container is launched. CMD command is different from RUN because RUN is used at the time of building an image and CMD used to run command when container is started.
+/usr/sbin/httpd- This command is used to start the web server
+-DFOREGROUND — This is not a docker command this is http server argument which is used to run webserver in background. If we do not use this argument the server will start and then it will stop.
+CMD [“/usr/sbin/httpd”,” -D”,” FOREGROUND”]
+
+
+METHOD 2
+
+Another way to create apache web server image is using manual commands.
+Step 1: Get the latest Centos Docker image by using docker pull command. Docker pull command is used to download or pull latest image from Docker Hub repositories.
+
+#docker pull centos:latest
+#docker images
+
+Step 3: To run docker image we use following command
+-it : This argument is used to allocate a bash shell and take standard input.
+--name : This argument is used to tag a name to the running container.
+
+#docker run -it --name webserver centos:latest
+
+Step 4: Now install Apache webserver and it’s all dependencies
+[root@Docker_Id]#yum install httpd –y
+
+Step 5: Now create a create a webpage at location 
+vi /var/www/html/index.html
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Insight Tech Academy</h>
+</h2>https://insighttechworld.net/</h2>
+
+</html>
+</body>
+
+
+Step 7: Now we have container in which apache webserver is installed and our webpage is configured. We can make a new customized docker image from the stopped docker image using docker commit command. Docker commit command will build our own image.
+#docker commit <container_id or name of container will launching> <Name of new image>:<version name>
+
+# docker commit 5f101d084b52 oamosu/mywebserver
+
+Step 8: Launching a webserver container using our customized image.
+-p: This argument is used to port forwarding. Which means anybody from outside who comes for 8080 its request is forwarded to port 80. Port 80 is default port number where apache webserver runs.
+/usr/sbin/httpd –D FOREGROUND: This argument is command which will run when container is launched this command will start the web server
+
+# dockerun -p 8080:80 oamosu/mywebserver /usr/sbin/httpd -D FOREGROUND
+
+Step 9: To See the Result on web browser
+http://<host ip>:8080/
+
+Step 9. Push to Docker Registry
+# docker login
+# docker images
+# docker push oamosu/mywebserver:latest
+
+
+-------------------------SAMPLE 2
+
+create a java file 
+# vi hello.java
+
+class Hello{
+public static void main(String[] args){
+System.out.println("This is java app by using Docker\n");
+}
+}
+
+
+create a Dockerfile with below content
+
+#vi Dockerfile
+
+FROM java:8                    FROM --> specify the base image on which it will be built, image should be built on top 
+COPY . /var/www/java           COPY --> copying the path inside /var/www/java (path inside the conatiner)
+WORKDIR /var/www/java          WORKDIR  --> setting the working directory
+RUN javac Hello.java           RUN -->  running the java code
+CMD ["java","Hello"]           CMD  --> running the commands in the java script.
+
+save and quit - after this build the dockerfile
+
+# mkdir java_docker
+# mv Dockerfile Hello.java java_docker/
+
+Next is to build Dockerfile
+
+# docker build .    --> . is the directory where the docker image will be built
+# docker images
+
+Then let's give it a tag
+# docker tag 9842ff6059cb myjava:latest  --> docker tag <imageID of <none> in docker images output> <given_name>:<latest>
+
+# docker images
+myjava                     latest    d23bdf5b1b1b   4 years ago     643MB
+
+Next is to run the myjava image
+# docker run myjava
+
+
+
+----------------------SAMPLE 3
+
+Now let’s see how we can build a web server image which can be used to build containers.
+
+In our example, we are going to use the Apache Web Server on Ubuntu to build our image. Let’s follow the steps given below, to build our web server Docker file.
+
+Step 1 − The first step is to build our Docker File. Let’s use vim and create a Docker File with the following information.
+
+FROM ubuntu 
+RUN apt-get update 
+RUN apt-get install –y apache2 
+RUN apt-get install –y apache2-utils 
+RUN apt-get clean 
+EXPOSE 80 CMD [“apache2ctl”, “-D”, “FOREGROUND”]
+
+
+The following points need to be noted about the above statements −
+
+We are first creating our image to be from the Ubuntu base image.
+
+Next, we are going to use the RUN command to update all the packages on the Ubuntu system.
+
+Next, we use the RUN command to install apache2 on our image.
+
+Next, we use the RUN command to install the necessary utility apache2 packages on our image.
+
+Next, we use the RUN command to clean any unnecessary files from the system.
+
+The EXPOSE command is used to expose port 80 of Apache in the container to the Docker host.
+
+Finally, the CMD command is used to run apache2 in the background.
+
+Next
+# docker build -t=”mywebserver” .
+
+# docker run -d -p 80:80 mywebserver 
+
+
+
+---------------------------Dockerfile Explained------------------------------
+Executing an external bash script with Dockerfile
+
+ 
+This example show us how to copy a bash script into docker and execute it while building the docker image.
+
+
+Bash script
+
+This bash file just prints Hello but you can install packages with apt so on.
+
+
+ubuntu@linux:~$ nano my-bash.sh
+ 
+#!/bin/bash
+set -e
+echo "Hello"
+
+
+>>Dockerfile
+
+ubuntu@linux:~$ nano Dockerfile
+FROM ubuntu:16.04
+COPY my-bash.sh /
+RUN chmod +x /my-bash.sh && /my-bash.sh
+CMD ["Finished!"]
+
+
+>>Build image
+
+ubuntu@linux:~$ docker build -t my_bash_image .
+ 
+Sending build context to Docker daemon   16.9kB
+Step 1/4 : FROM ubuntu:16.04
+ ---> dd6f76d9cc90
+Step 2/4 : COPY my-bash.sh /
+ ---> 999c8ab5eb6f
+Step 3/4 : RUN chmod +x /my-bash.sh && /my-bash.sh
+ ---> Running in cf67ddbfccf6
+Hello
+ ---> 8bf854a3e3e5
+Removing intermediate container cf67ddbfccf6
+Step 4/4 : CMD Finished!
+ ---> Running in d16ca379f292
+ ---> d0fd678a46df
+Removing intermediate container d16ca379f292
+Successfully built d0fd678a46df
+Successfully tagged my_bash_image:latest
+
+
+
+-------------------Docker Push to Remote Repository-------------------
+
+# docker pull centos  --> pull an existing image from registry
+# docker images  -->
+# docker run -it -d centos  --> run it in detached mode
+# docker ps -a
+
+Start the container in iterractive mode on bash to execute commands:
+# docker exec -it b32b89015545 bash  --> <containerID form docker ps -a output>
+
+Make modifications as desired:
+[root@b32b89015545 /]# mkdir femi-directory
+[root@b32b89015545 /]# touch insight.java
+[root@b32b89015545 /]# ls
+[root@b32b89015545 /]# exit
+# docker ps -a
+
+Next, is it commit this container to a new image
+# docker commit b32b89015545 oamosu/test-image-centos:7.7  --> <containerID> <dockerhub_username>/image_new_name:<tag>
+
+# docker images
+
+Now, let's push to Dockerhub
+- need to login to DockerHub first
+# docker login
+username
+password
+
+# docker push oamosu/test-image-centos:7.7  -->  <image-name>:<tag>
+
+
+
+
+------------------DOCKER COMPOSE---------------------
+
+Install
+sudo apt-get install docker-compose
+docker-compose -v
+
+cd
+mkdir docker-compose-example
+cd docker-compose-example
+
+create a file docker-compose.yml with below content
+
+version: '2'
+
+services:
+   db:
+     image: mysql:5.7
+     volumes:
+       - db_data:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: somewordpress
+       MYSQL_DATABASE: wordpress
+       MYSQL_USER: wordpress
+       MYSQL_PASSWORD: wordpress
+
+   wordpress:
+     depends_on:
+       - db
+     image: wordpress:latest
+     ports:
+       - "8080:80"
+     restart: always
+     environment:
+       WORDPRESS_DB_HOST: db:3306
+       WORDPRESS_DB_USER: wordpress
+       WORDPRESS_DB_PASSWORD: wordpress
+volumes:
+    db_data:
+    
+    ------------------
+    
+    docker-compose up -d
+
+
+

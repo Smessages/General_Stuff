@@ -1,0 +1,33 @@
+
+>>>How to Change the SSH Port in Linux<<<
+
+1. Choosing a New Port Number (1025 above)
+
+2. Adjust Firewall
+#firewall-cmd --permanent --zone=public --add-port=5522/tcp
+#firewall-cmd --reload
+
+CentOS users also need to adjust the SELinux rules:
+
+#semanage port -a -t ssh_port_t -p tcp 2202
+
+vi /etc/ssh/sshd_config
+and configure port 2202 or your chosen port #
+
+
+3. Configure SSH file
+vi /etc/ssh/sshd_config
+Search for the line starting with Port 22. In most cases, this line starts with a hash (#) character. Remove the hash # and enter the new SSH port number:
+
+#Port 22
+
+4. Restart SSHD service
+systemctl restart sshd
+
+To verify that SSH daemon is listening on the new port 2202, type:
+# ss -an | grep 2202
+
+5. Using the New SSH Port
+To specify the port, invoke the ssh command followed by the -p <port_number> option:
+
+#ssh -p 2202 username@remote_host_or_ip
