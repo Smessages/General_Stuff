@@ -1,0 +1,59 @@
+
+------------------------
+Role of Solutions Architect
+------------------------
+Study existing technology landscape and understand current application workloads
+Understand and document technical requirements from clients
+Define Migration strategy to move application to cloud
+Develop architecture blueprints and detailed documentation. Create bill of materials, including required Cloud Services (such as EC2, S3 etc.) and tools;
+Design the overall Virtual Private Cloud VPC environment including server instance, storage instances, subnets, availability zones, etc
+Design the AWS network architecture including VPN connectivity between regions and subnets
+Design the HA / DR strategies
+Set up process, services and tools around cloud
+Oversee build of the environment
+Execute migration plan
+Leverage appropriate AWS services
+Validate the environment to meets all security and compliance controls
+
+An AWS certified solutions architect - associate would normally be engaged in designing an AWS environment that has following features
+
+Highly available
+Fault tolerant
+Scalable
+Secure
+Cost efficient
+Alongside, s/he will be in involved in other activities such as:
+
+Migration
+Automation
+Disaster recovery
+Evaluating new services and solutions
+
+
+----------------------------------
+What does an AWS solutions architect do?
+----------------------------------
+Originally Answered: What exactly does a solutions architect do?
+Solutions Architecture is all about how to build a (normally) technical answer to a problem or question, or end user requirement.
+
+Exactly what the architect does will depend on the source of the challenge and their specific area of expertise.
+
+As a Solutions Architect myself specialising rapid, mobile and temporary internet connectivity (over cellular), I can share what I do exactly which I would broadly put into two categories, reactive and proactive tasks.
+
+The reactive tasks are when I am asked to come up with a solution to a problem by a customer. They will typically say something like - ‘How do I provide internet connectivity to my staff in remote areas”, or “How can I get data off of a vehicle remotely?” or “How do I deploy a battery powered IP CCTV solution anywhere and access it remotely?”.
+
+In all cases the first thing is to accurately define the problem and the requirement. In many cases the customer doesn’t really know the full extent of the challenge, they just have something that needs to work and they don’t know how to make it work. My job is to first gather all the detail and clarify exactly what problem is that the solution needs solve.
+
+After that, its a question of breaking down the typically complicated requirement into manageable solvable pieces, build solutions for each piece and then pull it all together as a complete solution to the original problem.
+
+To do that, a solution architect needs to have an analytical approach, and understand the building blocks of the problem (and ultimately the solution) to be able to see how it all comes together. In my world that means understanding, IP networks, battery power, cellular connectivity, firewalls, server hosting, datacentres, long range wifi, APIs, remote management technologies, industrial protocols, electronics. application development, mechanical engineering etc. I need to be able to work with all of those technologies and topics and understand them to a deep enough level that I can specify them as parts of the solution.
+
+Of course I can’t be a rockstar application developer, electronics engineer and server admin all at the same time - these are roles you need to work a lifetime at to become the very best, but I can be proficient in all of them, understand them, and specify them, and I keep a virtual Rolodex of rockstar contacts and websites and reference material for all of them that I can call on or make reference to.
+
+Once the solution has been designed, the next step will always be a proof of concept which is a chance to have a low risk (commercially and technically) trial of the solution to make sure it will work. That is when I will be engaged to bring all the rockstars together to actually make it all work and I will project manage and document the whole thing from start to finish.
+
+Assuming the PoC goes to plan and the customer is happy and wants to go live, my job after depends on the customer. I might just hand the plans over and they then make it happen, or they might ask me to supervise the delivery of the complete turnkey solution. Either way, my role is to be an independent advocate for them, educating them on the current best practises, challenging the suppliers and contractors to deliver cost effective innovation, sometimes acting as a type of technology translator for them between all parties, and always making sure the project goes smoothly solving problems as they arise.
+
+To be able to do all of this I have to proactively search out and learn and understand as much as I can about the technologies I work with, and the key players including vendors and innovative partners and new technology approaches. I spend all my non reactive time searching for new products, new technologies and new approaches to existing problems. I attend webinars, training days and exhibitions, I buy equipment and tools and subscriptions to new services, I build electronic prototypes, code applications, machine plastics and metals, build wireless networks and install IP CCTV and ultimately I learn as much as I can about my areas of specialism so that I know enough about as much as possible to either have an answer ready to a customer question or know exactly where or who to go to get one.
+
+So what does a solution architect do exactly? They analyse, understand and simplify complicated (often multi-subject/industry/technology/vertical) problems to component challenges, then they design and build solutions collaboratively with the very best technologies and people they can find to solve those challenges and to design and build an end solution.
