@@ -1,0 +1,308 @@
+https://docs.docker.com/engine/install/centos/
+
+Install Docker on CentOS 7
+
+* Install required packages
+- yum-utils
+- device-mapper-persistent-data and lvm2
+$ sudo yum install -y yum-utils \
+device-mapper-persistent-data \
+lvm2
+
+* Setup the stable repository
+$ sudo yum-config-manager --add-repo https://downlad.docker.com/linux/centos/docker-ce.repo
+
+* Enable and later disable the edge and test repositories (for training purpose)
+$ sudo yum-config-manage --enable docker-ce-nightly
+$ sudo yum-config-manage --enable docker-ce-test
+$ sudo yum-config-manage --disable docker-ce-nightly
+$ sudo yum-config-manage --disable docker-ce-test
+
+$ yum list docker-ce --showduplicates | sort -r
+
+To install the latest version
+$ sudo yum install docker-ce docker-ce-cli containerd.io
+
+
+--------------------OR----------------------
+
+
+--Install using the convenience script
+$ curl -fsSL https://get.docker.com -o get-docker.sh
+$ sudo sh get-docker.sh
+
+--Manage Docker as a non-root
+To create the docker group and add your user:
+$ sudo usermod -aG docker <your-username>
+
+--Create the docker group.
+$ sudo groupadd docker
+
+--Add your user to the docker group.
+$ sudo usermod -aG docker $USER
+$ newgrp docker 
+
+--Verify that you can run docker commands without sudo.
+$ docker run hello-world
+
+$ sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
+$ sudo chmod g+rwx "$HOME/.docker" -R
+
+--Start Docker service
+$ sudo systemctl status docker
+$ sudo systemctl start docker
+
+--Configure Docker to start on boot
+$ sudo systemctl enable docker.service
+$ sudo systemctl enable containerd.service
+
+--Deploy, Login, Exit Container
+$ docker image ls
+$ docker images
+$ docker pull redis
+$ docker pull nginx
+$ docker images
+
+--Run an ineractive container with pseudo-TTY
+$ docker run -it ubuntu
+/# ls
+/# whoami
+/# ps -ef
+/# exit
+
+--Connect another session to the same running container (either by attach or exec command)
+$ docker run -it ubuntu
+/# 
+
+open another terminal and dupicate the current profile to check
+$ docker ps
+
+now let's attach this container using the containerID
+$ docker attach <containerID>
+/# ps -ef
+/# ls
+/# exit
+
+Go back to the Host Terminal and run another container
+$ docker run -it ubuntu
+
+Launch the duplicate terminal again and attach to the container
+$ docker ps
+$ docker exec -it 60457d88167c bash
+/# ps -ef
+/# exit
+exit from the duplicate and the host will remain connected
+$ docker ps
+
+--Run a container in detach mode, container will be running and the terminal will be available for other activities
+$ docker run -d nginx
+$ docker run -d mongo
+$ docker run -d nginx
+$ docker ps
+$ docker run --help
+
+--List the running containers on the host
+$ docker run -d nginx
+$ docker run -d redis
+$ docker ps
+$ docker stop 3b8bb30a63aa
+$ docker stop vibrant_vaughan
+$ docker ps -a
+$ docker start 0ca13553d8b6
+$ docker restart cd421ee918e6
+$ docker ps
+
+
+--Container filesystem - where are the container stored?
+$ cd /var/lib/docker/
+$ sudo ls -l
+# cd containers/  --> you will see that their is directory for each container
+# docker ps -a
+compare the containerID first 12 letters with each other, this is wehre information about each container is stored.
+# cd ../image/
+# ls -l   -->  you will see a directory (overlay2) overlay2 is the storage driver used by the docker.
+# docker info | grep overlay2
+# cd overlay2/
+# ls -l
+# pwd
+/var/lib/docker/image/overlay2  --->  to confirm your location
+Their is a file called 'repositories.json' which list all the images in the host. To confirm:
+# cat repositories.json
+# docker images
+
+
+--Working with Container hostnames
+By the default, docker provide random name for each container we create
+- check the default name provided by running # docker ps
+- from inside the container, run command hostname
+
+# docker run -it -d ubuntu
+# docker ps
+# docker attach 5def72e3b7c8
+/# hostname   -->  hostname is the same as containerID while container name is either assigned randomly or assigned by user
+/# exit
+
+run a container with a given name
+# docker run --name test1_con_name -it -d ubuntu
+# docker ps
+# docker attach test1_con_name
+/# hostname
+
+run a container with a given name and hostname
+# docker run --name test2_con_name --hostname test2_hostname -it -d ubuntu
+# docker attach test2_con_name
+/# hostname
+
+
+--Working with multiple containers
+-provide container name as well as hostname with the docker run command
+-check the names
+-publish a port for each container (providing public access)
+# docker run --name nginx_1 --hostname nginxhost_1 -p 80 -d nginx
+# docker run --name nginx_2 --hostname nginxhost_2 -p 80 -d nginx
+# docker ps
+This container are exposed with the external port number :::49154->80/tcp on port 80 using the ip address of the host. Try it on the web browser with <hostIP>:<externalPort> http://192.168.1.180:49153/
+
+--Run a container from different images of the same repository
+-provide container names as well as with hostname with docker run command
+-check the names
+-publish a port for each container
+- go to hub.docker.com and look for nginx repository 
+- search for nginx
+- choose official image
+- scroll down to look for a specific version or latest to use
+# docker run --name nginx_3 --hostname nginxhost_3 -p 80 -d nginx:1.18
+# docker ps
+then try it out on the web browser to see if it's running
+
+
+--Conatiner stats and inspect
+-display the running process of a container
+-docker top <containerID> or <conatiner name>  --display the running process on the container
+# docker ps
+# docker top 23fa98347645
+
+Docker stat command
+-display live data stream of container(s) resource usage statistics
+-docker stats <containerID> or <container name>
+# docker ps
+# docker stats 23fa98347645  --> display the cpu, mem, etc
+CONTAINER ID   NAME      CPU %     MEM USAGE / LIMIT     MEM %     NET I/O          BLOCK I/O     PIDS
+23fa98347645   nginx_3   0.00%     1.426MiB / 2.709GiB   0.05%     2.2kB / 2.06kB   0B / 12.3kB   2
+CONTAINER ID   NAME      CPU %     MEM USAGE / LIMIT     MEM %     NET I/O          BLOCK I/O     PIDS
+23fa98347645   nginx_3   0.00%     1.426MiB / 2.709GiB   0.05%     2.2kB / 2.06kB   0B / 12.3kB   2
+
+Docker inspect command
+-return low-level information on docker objects
+-docker inspect <containerID> or <container name>
+# docker inspect 23fa98347645 | more
+gives information about the state and other container objects such the DNS, host config, restart policy and all the objects that are related to the container.
+
+
+-- Deleting Containers
+# docker ps
+# docker rm 23fa98347645
+need to stop a running container before it can be removed
+# docker stop 23fa98347645
+# docker ps -a
+# docker rm 23fa98347645
+
+
+Configure a container to be self-deleted once stopped
+-docker run --rm
+# docker run --name self_delete --rm -p 80 -d nginx
+# docker ps
+# docker stop self_delete
+# docker ps
+# docker ps -a  --> nowhere to be found because it was started with the option --rm
+
+ 
+----DOCKER NETWORKING
+1. Linux COntainer Networking
+2. Bridge, Host, None and Overlay Networks
+3. List, Create, Inspect and Remove new networks
+4. Launch Container in desired network(s)
+
+
+>> There are 3 different networks available on Docker host upon creation
+- Bridge
+- Host
+- None
+
+# docker network ls
+NETWORK ID    	NAME      	DRIVER    SCOPE
+75c12e493e6d   	bridge    	bridge    	local
+f534830feb6f   	host      	host      	local
+082a9d9b0b64   	none      	null      	local
+
+# ifconfig  -->  to see the docker0 network interface
+- Unless specified, the containers connect to docker0 network upon creation
+- The bridge network represents the docker0 network on the host
+- Containers are run on a separate network stack, internal to the Docker host
+- Share the external IP address of the host through the use of NAT
+
+# docker network inspect bridge
+# ifconfig  --->  to confirm
+
+Let's start two containers on the docker host
+$ docker network inspect bridge
+$ docker run -itd --name=nginx1 -p 80 nginx
+$ docker run -itd --name=tomcat1 -p 8080 tomcat
+
+$ docker network inspect bridge   --->  you will see that there are 2 conatiners using this network interface and confirm their internal IP addresses (172.17.0.2, 172.17.0.3)
+
+$ docker ps   --->  to see the running containers and inspect using the docker inspect command with the containerID or containerName
+$ docker inspect d0b63b6b2d2c  ---> you will see the information about the network used and the IP adress provided as well
+
+- Internal addresses are assigned automatically, through DHC{, in the private range
+- To allow communication to and from the world, need to publish the private container port to the host networking namespace
+- Mappings are configured when running a new conatiner, with the flag -p or --publish, followed by the external_port:internal_port
+
+So, let's acces this comtainer from the outside world using the docker host IP and the ports
+$ docker ps   -->  to get information about the port
+http://192.168.1.180:49154
+
+$ docker run -itd --rm --name=nginx2 -p 32000:80 nginx
+$ docker run -itd --rm --name=tomcat22 -p 33000:8080 tomcat
+
+$ curl 192.168.1.180:32000
+http://$ 192.168.1.180:32000
+
+- If you provide an external port that is not free, their be error (bind error)
+
+
+**Host Network
+- run docker network inspect host to get information about this network
+- start 2 containers onthe docker host
+$ docker run -it -d --rm --net=host --name=nginx2 nginx
+$ docker run -it -d --rm --network=host --name=tomcat2 tomcat
+- run the network inspect command again
+- inspect the running containers $docker inspect <containerID> or <containerName>
+
+$ docker network inspect host  --> you may not see any container listed in the host yet
+$ docker run -it -d --rm --net=host --name=nginx2 nginx
+$ docker run -it -d --rm --network=host --name=tomcat2 tomca
+
+$ docker network inspect host  -->  now you will see containers hosted in the network
+$ docker inspect tomcat2  -->  to inspect the tomcat2 container and see the network it uses
+$ docker inspect nginx2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

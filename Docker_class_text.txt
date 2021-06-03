@@ -1,0 +1,1225 @@
+Sebastian Colomar (Faculty)
+https://docs.docker.com/
+
+Install Docker
+https://docs.docker.com/engine/install/ubuntu/
+https://docs.docker.com/engine/install/linux-postinstall/
+
+
+##Official Dockerfile for the followings:
+https://hub.docker.com/_/mysql
+https://hub.docker.com/_/postgres
+
+
+docker image = binary (mysqld)
+docker volume = data (/var/lib/mysql)
+docker container = environment (execute the process)
+docker container = metadata (execution)
+
+##Docker Install
+sudo apt install docker.io
+sudo docker run -d alpine ping localhost --> this will have 3 folders created in the image (image, container, volume) Note: Docker image is read only.
+sudo ls /var/lib/docker/image -ld
+sudo ls /var/lib/docker/containers -ld
+sudo ls /var/lib/docker/volumes -ld
+sudo ls /var/lib/docker/network -ld
+
+##Configure Docker to start on boot
+systemctl is-enabled docker
+systemctl enable docker.service
+
+/etc/docker/daemon.json
+
+-----------------------------------------------------
+##Dockerfile
+
+FROM alpine
+COPY src .
+RUN apk add php
+ENTRYPOINT ["php"]
+CMD ["-f","index.php","-S","0.0.0.0:8080"]
+EXPOSE 8080
+
+------------------------------------------------------
+
+docker build -t test .
+
+sudo find /var/lib/docker | grep <imageID>  --> to find the location for the folders created in the Docker build task
+
+Run the Container
+docker run --entrypoint php test:latest -f index.php -S 0.0.0.0:8080
+
+docker pull academiaonline/dca-phpinfo
+
+############Excercise 1
+
+docker pull alpine
+docker image ls | grep alpine
+docker run --detach --name test alpine ping localhost
+docker logs test | tail
+
+##Stop a Container
+docker 2>& 1 | grep -E "stop|kill"
+docker ps -a
+docker kill test
+docker rm test
+docker rmi alpine -f
+
+##Run Multiple Containers in an Image
+for x in 1 2 3 4 ; do docker run --detach --name test_${x} alpine ping localhost ; done
+
+
+------------------------------------------------------------------
+PRACTICE
+https://github.com/academiaonline/Circabc-OSS
+
+https://www.youtube.com/watch?v=19sYPLwNw6s
+
+https://labs.play-with-docker.com/
+
++ ADD NEW INSTANCE
+
+docker swarm init --advertise-addr 192.168.0.28
+docker swarm join-token manager
+docker stack deploy -c 2021-04-php/etc/swarm/manifests/php.yaml php
+docker stack services php
+
+
+2021-04-php/etc/swarm/manifests/php.yaml
+services:
+  php:
+    deploy:
+      replicas: 5
+    image: academiaonline/2021-04-php:latest
+    ports:
+    - 30000:8080
+version: "3.8"
+
+
+----------
+DAY 2
+----------
+
+Develop = GITHUB
+Test = ACTIONS/JENKINS
+Deploy = DOCKERHUB
+image = READ ONLY FILESYSTEM
+volume = RO/RW DATA AND CONFIG
+container = RW only METADATA
+
+container = RW only METADATA   --->  dev = test = prod
+
+
+ORIGINAL DOCKER Image for Alpine
+
+FROM scratch
+ADD alpine-minirootfs-3.13.4-x86_64.tar.gz /
+CMD ["/bin/sh"]
+
+
+Create a Docker Image from Scratch
+sudo tar czf image.tgz /
+
+
+ADD tar.tgz /
+RUN apk add php
+FROM scratch
+
+------------------
+An Artifactory repository is a hosted collection of Docker repositories, effectively, a Docker registry in every way, and one that you can access transparently with the Docker client. Since Artifactory places no limitation on the number of repositories you may create, you can manage any number of Docker registries in Artifactory.
+------------------
+
+
+--------------
+To count the number of binaries in a Docker image
+--------------
+# docker run --rm --entrypoint find alpine / | grep bin/ | wc -l   
+# docker run --rm --entrypoint find ubuntu / | grep bin/ | wc -l
+
+Run a container in detach mode means running it in the background
+# docker run -d php
+
+--publish  or -p   --->  will connect the network of the container and the network of the host machine
+
+docker container ls --no-trunc  ---> will display all details of conatiner
+
+docker top <containerID>  --> to display top processes on a container
+# docker top 459bafbe625cc81da682fcca1b97805bef1e3c2a9923389262763491d7fa1585
+
+Remove all stopped containers, clean up the library
+# docker ps all
+# docker container prune
+# docker container prune --force
+
+Run application or Process in a container
+docker exec
+# docker exec --detach test ping localhost
+
+See number of processes running in a container
+docker top <container_name>
+# docker top test
+
+
+Run MySQL container
+# docker run --detach --env MYSQL_ROOT_PASSWORD=sebastian1234 --name test-mysql --rm mysql 
+# docker logs test-mysql     --> to check the logs
+# docker logs test-mysql --follow     -->  to follow the log
+# docker top test-mysql    --> give the information of dirrerent processes that are running in the container
+
+
+---------------
+CREATE Container
+---------------
+# docker create --env MYSQL_ROOT_PASSWORD=sebastian1234 --name test-mysql-2 --rm mysql 
+
+Run Container
+# docker start test-mysql-2
+
+Create and Start Container
+# docker run --detach --env MYSQL_ROOT_PASSWORD=sebastian1234 --name test-mysql-3 --rm mysql 
+
+RUN = CREATE + START
+
+Important commands for Docker
+# docker create --name test php
+# docker start test
+# docker stop test
+# docker rm test
+
+Start docker service
+# docker swarm init
+
+Docker Service to Create Load Balancers
+Create docker service
+# docker service create --name test php
+# docker service create --name test academiaonline/2021-04-php
+
+docker swarm init
+# docker service create --name test php
+
+Ccale docker service with replicas
+#docker service scale test=10
+
+Command List
+docker service ls
+docker service 
+docker service scale 
+docker service scale test=10
+docker service ls
+docker ps
+
+
+docker service ps test
+
+# Docker file reference builder -
+https://docs.docker.com/engine/reference/builder/
+
+--------------------
+Dockerfile & BuildKit
+--------------------
+https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
+
+Clone Repo
+# git clone https://github.com/academiaonline/2021-04-php
+
+# docker build --tag academiaonline/2021-04-php 2021-04-php/
+
+
+Dockerfile Instruction List
+FROM
+RUN
+CMD
+LABEL
+ADD
+COPY
+EXPOSE
+ENV
+USER
+VOLUME
+WORKDIR
+ARG
+ONBUILD
+STOPSIGNAL
+ENTRYPOINT
+Instructions
+HEALTHCHECK
+
+
+--------------------------------------------------------------
+Example of Dockerfile - Real Life Project
+
+#################################################################################
+#       Copyright (C) 2020        Sebastian Francisco Colomar Bauza             #
+#       SPDX-License-Identifier:  GPL-2.0-only                                  #
+#################################################################################
+FROM 										\
+	alpine \
+	AS 									\
+	zip
+#################################################################################
+ARG 										\
+	zip=alfresco-community-4.2.f.zip
+#################################################################################
+WORKDIR 									\
+	${zip}
+#################################################################################
+RUN 										\
+	apk add curl 								\
+										;
+#################################################################################
+RUN 										\
+	curl 									\
+		--location 							\
+		--output 							\
+			${zip} 							\
+		https://download.alfresco.com/release/community/4.2.f-build-00012/${zip} \
+										;
+#################################################################################
+RUN 										\
+	unzip ${zip} 								\
+										;
+#################################################################################
+FROM 										\
+	maven:3.6.3-openjdk-15@sha256:e8ab59fe2b7dc16643e8f38a2e7df7f26a72be377ab15c4224301fa9bd5ab55f \
+	AS 									\
+	build
+#################################################################################
+ARG 										\
+	dir_build=/build
+ARG 										\
+	folder_angular=circabc-docker/angular
+ARG 										\
+	folder_backend=circabc-backend/target
+ARG 										\
+	folder_frontend=circabc-frontend/dist/circabc
+ARG 										\
+	folder_tomcat=circabc-docker/tomcat
+ARG 										\
+	zip=alfresco-community-4.2.f.zip
+#################################################################################
+WORKDIR 									\
+	${dir_build}
+#################################################################################
+COPY 										\
+	.					 				\
+	.
+#################################################################################
+COPY 										\
+	--from=zip 								\
+	${zip}/web-server/webapps/alfresco.war	 				\
+	circabc-resources/
+#################################################################################
+RUN 										\
+	mvn clean 								\
+	&& 									\
+	mvn clean package 							\
+		-Dbackend-target.env=tomcat-docker 				\
+		-Dfrontend-target.env=docker 					\
+		-Dserver.node=N2 						\
+										;
+#################################################################################
+RUN 										\
+	mkdir -p 								\
+		${folder_tomcat}/dist/ 						\
+		${folder_angular}/dist/ 					\
+	&& 									\
+	cp -fv 									\
+		${folder_backend}/circabc.war 					\
+		${folder_tomcat}/dist/ 						\
+	&& 									\
+	cp -fv 									\
+		-r 								\
+		${folder_frontend} 						\
+		${folder_angular}/dist/ 					\
+										;
+#################################################################################
+FROM                                                                            \
+        nginx:1.18.0-alpine@sha256:d7038eae37cfa36cd8e286f6d6daf0df7a445a2da327517b3cde4ba1833adc0c \
+        AS                                                                      \
+        production
+#################################################################################
+ARG                                                                             \
+        dir_app=/usr/share/nginx/html
+ARG                                                                             \
+        dir_build=/build
+ARG                                                                             \
+        folder_angular=circabc-docker/angular
+#################################################################################
+WORKDIR                                                                         \
+        ${dir_app}
+#################################################################################
+RUN                                                                             \
+        for package in                                                          \
+                $(                                                              \
+                        for x in 0 1 2 3 4 5 6 7 8 9;                           \
+                        do                                                      \
+                                apk list                                        \
+                                |                                               \
+                                awk /nginx/'{ print $1 }'                       \
+                                |                                               \
+                                awk -F-$x  '{ print $1 }'                       \
+                                |                                               \
+                                grep -v '\-[0-9]';                              \
+                        done                                                    \
+                        |                                                       \
+                        sort                                                    \
+                        |                                                       \
+                        uniq                                                    \
+                        |                                                       \
+                        grep -v ^nginx$                                         \
+                );                                                              \
+        do                                                                      \
+                apk del $package;                                               \
+        done                                                                    \
+                                                                                ;
+#################################################################################
+RUN                                                                             \
+        rm      -f                                                              \
+                        /etc/nginx/nginx.conf                                   \
+        &&                                                                      \
+        rm      -f                                                              \
+                -r                                                              \
+                        /etc/nginx/conf.d/*                                     \
+        &&                                                                      \
+        rm      -f                                                              \
+                -r                                                              \
+                        *                                 			\
+                                                                                ;
+#################################################################################
+COPY                                                                            \
+        --from=build                                                            \
+        ${dir_build}/${folder_angular}/dist/circabc/                            \
+        ui
+#################################################################################
+VOLUME                                                                          \
+        /var/cache/nginx                                                        \
+        /var/run
+#################################################################################
+CMD 										\
+	["nginx","-g","daemon off;"]
+#################################################################################
+
+--------------------------------------------------------------
+
+#########################################################################
+#      Copyright (C) 2020        Sebastian Francisco Colomar Bauza      #
+#      SPDX-License-Identifier:  GPL-2.0-only                           #
+#########################################################################
+ARG									\
+	digest="@sha256:4fe11ac2b8ee14157911dd2029b6e30b7aed3888f4549e733aa51930a4af52af"
+ARG									\
+	image="nginx"
+ARG									\
+	tag="1.19.9-alpine"
+#########################################################################
+FROM									\
+	${image}:${tag}${digest}					\
+		AS production
+#########################################################################
+RUN									\
+	for package in							\
+		$(							\
+			for x in 0 1 2 3 4 5 6 7 8 9;			\
+			do						\
+				apk list				\
+				| awk /nginx/'{ print $1 }'		\
+				| awk -F-$x  '{ print $1 }'		\
+				| grep -v '\-[0-9]';			\
+			done						\
+			| sort						\
+			| uniq						\
+			| grep -v ^nginx$				\
+		);							\
+	do								\
+		apk del $package;					\
+	done								\
+									;
+#########################################################################
+RUN									\
+	rm 	-f 							\
+			/etc/nginx/nginx.conf				\
+	&& 								\
+	rm 	-f 							\
+		-r 	/etc/nginx/conf.d/*				\
+									;
+#########################################################################
+VOLUME									\
+	/var/cache/nginx						\
+	/var/run							\
+#########################################################################
+
+--------------------------------------------------------------
+FROM
+is used to begin a new build stage. This sets the base image for
+subsequent instructions.
+
+FROM postgres:latest@sha256:b8a95fca95479c5370fe52dfa753940bf7b037e30a121e3ece2106a8841709c0
+
+# Docker File
+- ** Docker file ** is the feature ** Docker ** provides for creating a ** Docker image **. ** Docker file ** is a simple text file with structure for building an image
+### ** How to create a Docker file **
+### ** Commands in Docker file **
+#### ** MAINTAINER **
+The `MAINTAINER` command is simply used to describe who is responsible for the maintenance and maintenance of the Dockerfile.
+- However, the `MAINTAINER` command is not commonly used as that type of information is also often available in the Git repo or elsewhere.
+- ** Example: **
+    `` dockerfile
+    MAINTAINER Joe Blocks <joe@blocks.com>
+    ``
+#### ** FROM **
+The `FROM` command specifies the base image for the Docker image.
+- ** Example: ** If you want to create an image based on a basic Linux image, use the following:
+    `` dockerfile
+    FROM ubuntu: latest
+    ``
+#### ** CMD **
+The `CMD` command specifies the command to be executed when the Docker container starts up based on the Docker image built from Dockerfile. 
+- ** VD1: **
+    `` dockerfile
+    CMD echo Docker container started.
+    ``
+    > This command will print out in the `docker container started` terminal every time the container starts up
+- ** VD2: ** Run 1 Java application:
+    `` dockerfile
+    CMD java -cp /myapp/myapp.jar com.jenkov.myapp.MainClass arg1 arg2 arg3
+    ``
+#### **COPY**
+The `COPY` command is used to copy one or more files from the Docker host (the Docker image builder from the Dockerfile) into the Docker image. The `COPY` command can copy both files and folders from the Docker host to the Docker image.
+- ** VD1: **
+    `` dockerfile
+    COPY / myapp / config / prod / myapp / config
+    ``
+    > The above command helps to copy the `/ myapp / config / prod` directory on Dockerhost to the` / myapp / config` directory on the Docker image
+- ** VD2: ** 
+    `` dockerfile
+    COPY /myapp/config/prod/conf1.cfg /myapp/config/prod/conf2.cfg / myapp / config /
+    ``
+    > The above command helps copy the files `/ myapp / config / prod / conf1.cfg` and` / myapp / config / prod / conf2.cfg` on the Docker host to the `/ myapp / config` directory on the Docker image 
+#### * `ADD` **
+The `ADD` command works similarly to the` COPY` command, with only a few minor differences:
+    - The `ADD` command can copy and extract TAR files from Docker host to Docker images
+    The `ADD` command can download files over HTTP and copy them to the Docker image
+- ** VD1: **
+    `` dockerfile
+    ADD myapp.tar / myapp /
+    ``
+    > This command will extract the `myapp.tar` file from the Docker host and copy it to the` / myapp / `directory in the Docker image
+- ** VD2: **
+    `` dockerfile
+    ADD http://jenkov.com/myapp.jar / myapp /
+    ``
+    > This command will download the file from the path and copy it to the `/ myapp /` directory
+#### ** `ENV` **
+The `ENV` command can set an environment variable inside the Docker image. This environment variable can be used for apps running inside the Docker image with the command `CMD`.
+- ** Example: ** 
+    `` dockerfile
+    ENV MY_VAR 123
+    ``
+    > The above command sets the environment variable `MY_VAR` with the value of` 123`
+#### ** `RUN` ** 
+The `RUN` command can execute executable commands within the Docker image. The `RUN` command will be executed during image build, so it should only be executed once. The `RUN` command can be used to install apps in the Docker image, or extract files, or any other required command line.
+- ** Example: ** 
+    `` dockerfile
+    RUN apt-get install some-needed-app
+    ``
+#### ** `ARG` **
+- The `ARG` command allows you to define parameters that can be passed to Docker when building Docker files.
+- ** Example: **
+    `` dockerfile
+    ARG tcpPort
+    ``
+    - When running the Docker command to build Dockerfile containing the above `ARG` command will look like this:
+        ``
+        docker build --build-arg tcpPort = 8080.
+        ``
+Parameters defined with the `ARG` command can be used anywhere in Dockerfile.
+- ** Example: **
+    `` dockerfile
+    ARG tcpPort = 8080
+    ARG useTls = true
+
+    CMD start-my-server.sh -port $ {tcpPort} -tls $ {useTls}
+    ``
+#### ** `WORKDIR` **
+- The `WORKDIR` command specifies the working directory inside the Docker image. It will affect all commands that follow it
+- ** Example: **
+    `` dockerfile
+    WORKDIR / java / jdk / bin
+    ``
+#### ** `EXPOSE` **
+- The `EXPOSE` command will open the network port on the Docker container to the outside network. For example, if the Docker container is running a webserver, you will probably need to open port 80 for the client to access.
+- ** Example: **
+    `` dockerfile
+    EXPOSE 8080
+    ``
+- You can choose the protocol that allows you to communicate with the port. ** Example: **
+    `` dockerfile
+    EXPOSE 8080 / tcp 9999 / udp
+    ``
+    > If no protocol is specified, the default is `tcp`
+#### ** `VOLUME` **
+- The `VOLUME` command is used to create a directory within the Docker image that is accessible from outside the Docker host. In other words, it is possible to create a directory inside the Docker image (eg `/ data`) and mount it in the` / container-data / container1` directory on the Docker host. The mount will be done when the container starts up
+- ** Example: ** 
+    `` dockerfile
+    VOLUME / data
+    ``
+#### ** `ENTRYPOINT` **
+- The `ENTRYPOINT` command provides an entrypoint for the Docker container. The entrypoint is an app or command that can be executed when the Docker container starts up. In this context the `ENTRYPOINT` is the same as the` CMD` command, the difference is that when using `ENTRYPOINT`, the Docker container will be disabled when` ENTRYPOINT` is finished.
+- ** Example: **
+    `` dockerfile
+    ENTRYPOINT java -cp /apps/myapp/myapp.jar com.jenkov.myapp.Main
+    ``
+#### ** `HEALTHCHECK` **
+The `HEALTHCHECK` command is used literally, to check the container at specified intervals, to monitor the apps running in the container. If the command returns `0` on exit, the container and apps are` healthy`. If return `1` proves the opposite.
+- ** Example: **
+    `` dockerfile
+    HEALTHCHECK java -cp /apps/myapp/healthcheck.jar com.jenkov.myapp.HealthCheck https: // localhost / healthcheck
+    ``
+By default, Docker will execute the `HEALTHCHECK` command every` 30s`, but can be customized with the `--interval` parameter:
+    `` dockerfile
+    HEALTHCHECK --interval = 60s java -cp /apps/myapp/healthcheck.jar com.jenkov.myapp.HealthCheck https: // localhost / healthcheck
+    ``
+By default, Docker will execute the command as soon as the Docker container is running. However, sometimes an app starts up taking a while, so it doesn't make sense to check. The start period can be set for the execution of the `HEALTHCHECK` command using the` --start-period` parameter:
+    `` dockerfile
+    HEALTHCHECK --start-period = 300s java -cp /apps/myapp/healthcheck.jar com.jenkov.myapp.HealthCheck https: // localhost / healthcheck
+    ``
+- It is possible to set a timeout for `HEALTHCHECK`. If the command takes too long to execute, Docker will treat the command as timed out. It is possible to set the timeout using the `--timeout` parameter:
+    `` dockerfile
+    HEALTHCHECK --timeout = 5s java -cp /apps/myapp/healthcheck.jar com.jenkov.myapp.HealthCheck https: // localhost / healthcheck
+    ``
+    > If a timeout occurs, the Docker container is also counted as unhealthy
+- If `HEALTHCHECK` fails, returns` 1`, or a timeout, Docker will try to run `HEALTHCHECK` again 3 times. If all else fails, the new container is unhealthy. This number of retries can be customized with the `--retries` parameter:
+    `` dockerfile
+    HEALTHCHECK --retries = 5 java -cp /apps/myapp/healthcheck.jar com.jenkov.myapp.HealthCheck https: // localhost / healthcheck
+    ``
+
+
+-------------
+Stop Signal
+-------------
+docker stop -> kill -15
+docker kill -> kill -9
+docker stop -> kill -15 && sleep 10 && kill -9
+SIGTERM
+trap
+help trap
+docker run --detach --env MYSQL_ROOT_PASSWORD=sebastian1234 --name test --rm mysql
+docker stop test
+time docker stop test
+
+
+Best Practices of Dockerfile
+- remove unnecessary packages
+- minimum number of layers
+
+Rules:
+1. Security
+2. Performance
+each line in dockerfile -> ONE NEW LAYER
+e.g: RUN apk add curl && gem install sinatra && gem install thin
+
+RUN => command to execute
+CMD => argument for the container
+
+---------------------------------------------------------------------------
+Assisted Practice
+---------------------------------------------------------------------------
+Create a Docker Image
+
+Problem Statement:
+Your manager has asked you to create a Docker image from a dockerfile so that it can
+be shared with others.
+
+Steps to Perform:
+1. Create a Dockerfile
+2. Use the dockerfile to create a Docker image.
+
+
+
+--------------------
+Dockerfile
+--------------------
+#########################################################################
+#      Copyright (C) 2020        Sebastian Francisco Colomar Bauza      #
+#      SPDX-License-Identifier:  GPL-2.0-only                           #
+#########################################################################
+ARG									\
+	digest="@sha256:4fe11ac2b8ee14157911dd2029b6e30b7aed3888f4549e733aa51930a4af52af"
+ARG									\
+	image="nginx"
+ARG									\
+	tag="1.19.9-alpine"
+#########################################################################
+FROM									\
+	${image}:${tag}${digest}					\
+		AS production
+#########################################################################
+RUN									\
+	for package in							\
+		$(							\
+			for x in 0 1 2 3 4 5 6 7 8 9;			\
+			do						\
+				apk list				\
+				| awk /nginx/'{ print $1 }'		\
+				| awk -F-$x  '{ print $1 }'		\
+				| grep -v '\-[0-9]';			\
+			done						\
+			| sort						\
+			| uniq						\
+			| grep -v ^nginx$				\
+		);							\
+	do								\
+		apk del $package;					\
+	done								\
+									;
+#########################################################################
+RUN									\
+	rm 	-f 							\
+			/etc/nginx/nginx.conf				\
+	&& 								\
+	rm 	-f 							\
+		-r 	/etc/nginx/conf.d/*				\
+									;
+#########################################################################
+VOLUME									\
+	/var/cache/nginx						\
+	/var/run							\
+#########################################################################
+
+
+
+---------------------------------
+Multi-Stage Build Dockerfile
+--------------------------------
+#####Build Stage
+FROM maven:3.6.1-jdk-8-alpine AS builder
+WORKDIR /build
+COPY . .
+RUN mvn install
+RUN mv target/*jar java.jar
+#####Production Stage
+FROM openjdk:jre-alpine3.8 AS production
+WORKDIR /app
+COPY --from=builder /build/java.jar .
+ENTRYPOINT ["java","-jar"]
+CMD ["java.jar"]
+
+
+----------------------------------------------------
+Dockerfile - Docker image to be used with Java
+----------------------------------------------------
+FROM maven:3.6.1-jdk-8-alpine AS builder
+WORKDIR /build
+COPY . .
+RUN mvn install
+RUN mv target/*jar java.jar
+FROM openjdk:jre-alpine3.8 AS production
+WORKDIR /app
+COPY --from=builder /build/java.jar .
+ENTRYPOINT ["java","-jar"]
+CMD ["java.jar"]
+
+
+
+
+####################################################
+##Reference links:
+https://github.com/jaimeSC-CEX/dca-dockercoins/blob/docker/hasher/Dockerfile
+https://github.com/academiaonline/dca-phpinfo
+https://github.com/academiaonline/nginx
+https://hub.docker.com/r/secobau/nginx
+https://github.com/academiaonline/dca-phpinfo
+https://hub.docker.com/repository/docker/academiaonline/dca-phpinfo
+https://github.com/academiaonline/dca-phpinfo/blob/v1.0/.github/workflows/ci.yaml
+
+##video:
+https://youtu.be/19sYPLwNw6s
+
+
+docker history academiaonline/2021-04-php
+docker inspect academiaonline/2021-04-php
+docker ps
+docker ps --all
+docker history docker/getting-started
+docker export --output docker_getting-started_flat.tar eloquent_cerf
+docker import docker_getting-started_flat.tar docker/getting-started:flat
+docker history docker/getting-started | grep ENTRYPOINT
+docker history docker/getting-started --no-trunc | grep ENTRYPOINT
+
+docker run --entrypoint /bin/bash --interactive --name test --tty docker/getting-started
+docker run --entrypoint sh --interactive --name test --tty docker/getting-started
+docker diff test
+docker run --entrypoint sh --interactive --name test2 --tty docker/getting-started
+ls /root
+IMAGE folder RO
+CONTAINER folder RW
+VOLUME folder RW
+
+docker commit test docker/getting-started:helloworld
+
+
+##Dockerizing Continuous Integration and Continuous Delivery
+git clone https://github.com/academiaonline/dca-phpinfo
+ cd dca-phpinfo/
+git checkout -- .
+git pull
+docker build -t academiaonline/dca-phpinfo:test .
+docker run -d --name dca-phpinfo academiaonline/dca-phpinfo:test
+docker logs dca-phpinfo 2>& 1 | grep 'PHP .* Development Server .* started'
+https://raw.githubusercontent.com/academiaonline/dca-phpinfo/v1.0/.github/workflows/ci.yaml
+
+https://github.com/academiaonline/simplilearn-phpinfo
+https://github.com/academiaonline/simplilearn-phpinfo/tree/docker
+https://github.com/academiaonline/simplilearn-phpinfo/blob/docker/.github/workflows/whatever.yaml
+https://github.com/academiaonline/simplilearn-phpinfo/blob/docker/README.md
+https://github.com/academiaonline/simplilearn-phpinfo
+https://hub.docker.com/repository/docker/academiaonline/simplilearn-phpinfo
+
+
+##Clean the System
+docker ps
+docker ps --all
+docker container prune  --> will remove all the stopped containers
+docker ps --all
+docker images
+docker image prune  --> will remove all unused images
+docker images
+docker volume ls
+docker volume prune  --> will remove all unwanted volume, volumes not used by any container
+
+
+
+#####################
+##Docker Network
+
+docker network ls
+ip route
+ip route | grep docker0
+docker network create my_bridge
+docker network ls
+docker network ls | grep my_bridge
+ip route | grep docker0
+ip route | grep br-
+docker run --detach --name c1 alpine ping localhost  --> create new container c1
+docker logs c1 | tail
+docker network ls | grep my_bridge
+docker run --detach --name c2 --network my_bridge alpine ping localhost
+docker run --detach --name c3 --network my_bridge alpine ping localhost 
+docker ps
+docker exec c2 ping -c1 c3   --> trying to connect each other container
+docker exec c3 ping -c1 c2
+docker exec c1 ip addres   ---> get container IP address
+docker exec c2 ip addres
+docker exec c31 ip addres
+
+docker network connect my_bridge c1  --> connect container
+docker exec c1 ip address
+docker exec c1 ping -c1 172.18.0.2
+docker exec c1 ip route
+docker network create --driver overlay my_overlay
+docker run --detach --name d2 --network host alpine ping localhost
+docker run --detach --name d3 --network host alpine ping localhost
+docker exec d2 ip route
+docker exec d3 ip route
+ip route
+
+##Create a website
+docker run --detach --name web --publish 80:80 nginx:alpine
+docker ps | grep web
+docker logs web
+docker exec web curl localhost
+docker exec web curl localhost -I
+
+docker run --detach --name nonet --network none alpine ping localhost
+docker ps
+docker ps | grep nonet
+docker logs nonet
+docker exec nonet ip route
+docker exec nonet ip address
+docker network prune
+
+##Create Webserver without network
+docker run --detach --name web2 --network none nginx:alpine
+docker logs web2
+docker exec web2 curl localhost
+docker run --detach --name web --publish 80:80 nginx:alpine
+
+docker network create web3net
+docker run --detach --name web3 --network web3net nginx:alpine
+docker ps | grep web3
+docker logs web3
+docker exec web3 curl localhost
+docker run --detach --name web4 --network web3net --publish 80:80 nginx:alpine
+docker exec web4 curl localhost
+curl localhost
+
+docker run --detach --name web5 --network none --publish 80:80 nginx:alpine
+docker exec web5 ip route
+docker exec web5 ip address
+docker run --detach --name web --network none --publish 80:80 nginx:alpine
+docker exec web ip address
+docker exec web curl localhost
+curl localhost
+
+docker network prune --force
+docker network create custom
+docker run --detach --name web --network custom nginx:alpine
+docker run --detach --name client --network custom alpine ping localhost
+docker logs web
+docker logs client
+docker top web
+docker top client
+docker exec client nslookup web 127.0.0.11
+docker exec web nslookup client 127.0.0.11
+nslookup client
+nslookup web
+
+
+#######################################################
+##Container Orchestration - SWARM
+
+$ docker network create phpinfo-network       ---> create a network to run application
+$ docker network ls
+$ docker run --help        --->  to see the different options of docker run command and may use the below:
+	--network network                Connect a container to a network
+	-p, --publish list                   Publish a container's port(s) to the host
+ 	--restart string                 Restart policy to apply when a container exits (default "no")
+https://docs.docker.com/engine/reference/run/   -->  to search for documentation
+
+Now let's create a container
+$ docker run --detach --name phpinfo --network phpinfo-network --publish 80:8080 --restart always academiaonline/simplilearn-phpinfo:0.1
+$ docker ps
+
+go to the web browser and try the access the container http://ipaddress
+
+$ docker top phpinfo
+$ sudo kill -9 <PID>
+$ docker kill phpinfo
+$ docker rm phpinfo
+$ docker run --detach --name phpinfo --network phpinfo-network --publish 80:8080 --restart always academiaonline/simplilearn-phpinfo:0.1
+$ docker top phpinfo
+$ sudo kill -9 7891
+
+Check the application onthe web browser again and it will still be running, though not high availablity but resillience, and if stopped with $ docker kill phpinfo, it will not survive
+
+
+Another option which is still resillience
+$ docker run --detach --name phpinfo --network phpinfo-network --publish 8080:8080 --restart no academiaonline/simplilearn-phpinfo:0.1
+$ docker top phpinfo
+$ sudo kill -9 7688
+
+
+##Now to use Orchestration in the container platform for Highly Availability, need to use Docker Swarm and initialize it first
+
+$ docker swarm init
+Swarm initialized: current node (hvbfw3fbct6aone1i1j4rlugh) is now a manager.
+To add a worker to this swarm, run the following command:
+    docker swarm join --token SWMTKN-1-391lgkmb7zmik02dg0t6x50ekak0a6evc74mat42wv1ocvn22n-55ffil539em61t7z7tup7khdp 172.31.14.91:2377
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+$ docker swarm leave --force  -->  optional if docker swar init is throwing error
+
+##Next is to join the worker node to the master
+Go to worker node and install docker and run the join command on it
+$ sudo docker swarm join --token SWMTKN-1-391lgkmb7zmik02dg0t6x50ekak0a6evc74mat42wv1ocvn22n-55ffil539em61t7z7tup7khdp 172.31.14.91:2377
+
+
+##Back on Master Node
+$ docker node ls
+
+##Now to deploy application using orchestrator, you need to create a Docker compose file using yaml
+# docker network create phpinfo-network
+networks:
+  phpinfo-network:
+    
+# docker run --detach --name phpinfo --network phpinfo-network --restart always academiaonline/simplilearn-phpinfo:latest
+services:
+  phpinfo:
+    deploy:
+      restart_policy:
+        condition: any
+    image: academiaonline/simplilearn-phpinfo:latest
+    networks:
+      - phpinfo-network
+      
+version: '3.8'     
+
+$ git clone https://github.com/academiaonline/simplilearn-phpinfo
+$ cd simplilearn-phpinfo/
+$ docker stack ls
+$ git branch
+$ git checkout docker
+$ docker stack deploy --compose-file etc/swarm/manifests/simplilearn-phpinfo.yaml simplilearn-phpinfo
+Creating network simplilearn-phpinfo_phpinfo-network
+Creating service simplilearn-phpinfo_phpinfo
+$ docker stack ls
+$ docker stack ps simplilearn-phpinfo
+$ docker stack services simplilearn-phpinfo 
+$ docker service logs simplilearn-phpinfo_phpinfo
+$ docker ps
+$ docker exec 8fb23eccec27 netstat -ltn
+$ docker exec 8fb23eccec27 netstat -ltn | grep 8080
+$ docker stack services simplilearn-phpinfo 
+$ docker exec eb91c75bffe9 netstat -ltn | grep 8080
+$ netstat -ltn | grep 80
+$ docker service logs simplilearn-phpinfo_phpinfo
+$ ip route | grep eth0
+
+Try the application on the web browser
+http://172.31.14.91/
+
+
+$ docker stack ls
+NAME                  SERVICES   ORCHESTRATOR
+simplilearn-phpinfo   1          Swarm
+
+$ docker stack services simplilearn-phpinfo
+$ docker stack ps simplilearn-phpinfo
+$ docker node ls
+
+Reboot the node that contain the conatiner
+
+On Master node, use this command to see how it works
+$ watch docker stack ps simplilearn-phpinfo 
+
+
+On Worker Node
+$ sudo docker ps
+$ sudo docker exec 1c5af3037ba4 nslookup phpinfo 127.0.0.11
+$ sudo docker exec 1c5af3037ba4 ip route   --> to get the ip of the container
+
+
+
+SECOND LAB PRATICE
+https://github.com/oamosu14/simplilearn-dockercoins/tree/main
+
+$ git clone https://github.com/academiaonline/simplilearn-dockercoins
+$ git clone https://github.com/academiaonline/simplilearn-dockercoins
+$ cd simplilearn-dockercoins/
+$ git checkout docker
+
+$ for service in hasher rng webui worker;             do               docker build --tag academiaonline/simplilearn-$ dockercoins:latest-${service}-testing ${service};             done
+$ for service in hasher redis rng;             do               docker network create ${service};             done
+$ docker run --detach --name redis --network redis --volume redis:/data redis
+$ for service in hasher rng;             do               docker run --detach --name ${service} --network ${service} academiaonline/simplilearn-dockercoins:latest-${service}-testing;             done
+$ docker run --detach --name worker --network redis academiaonline/simplilearn-dockercoins:latest-worker-testing
+from Sebastian Colomar (Faculty) to All Participants:
+for service in hasher rng;             do               docker network connect ${service} worker;             done
+$ git pull
+$ docker build --tag academiaonline/simplilearn-dockercoins:latest-webui-testing webui/
+$ docker run --detach --name webui --network redis academiaonline/simplilearn-dockercoins:latest-webui-testing
+$ docker logs worker 2>& 1 | grep "Coin found"
+
+https://github.com/academiaonline/simplilearn-dockercoins/blob/docker/.github/workflows/ci.yaml
+
+Create a directory 
+
+
+----------04/24/2021
+
+#######################################################
+https://docs.docker.com/compose/compose-file/     --->  docker compose documentation
+https://github.com/academiaonline/simplilearn-dockercoins/blob/docker/.github/workflows/ci.yaml
+
+---------------------
+https://labs.play-with-docker.com/
+Start
+ctrl + insert -- to copy on Play with Docker
+shift + insert -- to paste
+
+Click +ADD NEW INSTANCE --> 5 times
+
+Means you will have 5 nodes --> to make a Highly Available cluster
+
+3 for Master  --> Control Plane
+2 for Worker  --> Data Plane
+
+
+--- Initialize the first node to be Master
+
+--- On Node1
+$ docker swarm init --advertise-addr 192.168.0.18
+$ docker swarm init --advertise-addr 192.168.0.13
+Swarm initialized: current node (socxdl8vz3k0dv3i5pk7igp89) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-3dqy0ymqi67yykiadavpsu7jiocptnhvlxciliox0o7anfmib9-92wbl5supq4higik09oxukyg0 192.168.0.13:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+--- Then copy the docker swarm command and run it on the 2 worker nodes
+$ docker swarm join --token SWMTKN-1-3dqy0ymqi67yykiadavpsu7jiocptnhvlxciliox0o7anfmib9-92wbl5supq4higik09oxukyg0 192.168.0.13:2377
+
+--- Next, copy the docker swarm join-token manager command and paste on the Node1
+$ docker swarm join-token manager
+--- then the output:
+$ docker swarm join-token manager
+To add a manager to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-3dqy0ymqi67yykiadavpsu7jiocptnhvlxciliox0o7anfmib9-b9piccr5aveuo97o1dqptd593 192.168.0.13:2377
+
+--- Next is to copy the docker swar join command from the output and run on other 2 master nodes
+$ docker swarm join --token SWMTKN-1-3dqy0ymqi67yykiadavpsu7jiocptnhvlxciliox0o7anfmib9-b9piccr5aveuo97o1dqptd593 192.168.0.13:2377
+
+--- Then go to Node1
+$ docker node ls   --->  to confirm the list of nodes
+$ docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+socxdl8vz3k0dv3i5pk7igp89 *   node1      Ready     Active         Leader           20.10.0
+xowyuqbhkyijr30rbx2l47az6     node2      Ready     Active         Reachable        20.10.0
+wupt0q0dzwjhel1l4ca82g23x     node3      Ready     Active         Reachable        20.10.0
+thxysb7cx3ig6repxdx7ce1nj     node4      Ready     Active                          20.10.0
+obgf5ps4k9gogctseajo4kkx1     node5      Ready     Active                          20.10.0
+
+
+--- AFTER THE CONFIGURATION
+Then start creating your application
+
+On Master Node 1
+$ git clone https://github.com/academiaonline/simplilearn-dockercoins
+$ cd simplilearn-dockercoins
+
+
+
+
+https://github.com/academiaonline/simplilearn-dockercoins/blob/docker/etc/swarm/manifests/docker-compose.yaml
+
+
+--------------Install Mirantis Container Runtime for Ubuntu
+Mirantis is the paid version of Docker Swarm, and graphical dashboard to manage Containers and the clusterized envirnment.
+
+https://docs.mirantis.com/containers/v3.1/mcr-deployment-guide/mcr-linux/ubuntu.html
+
+
+-------------Install the MKE image
+
+https://docs.mirantis.com/containers/v3.1/mke-deployment-guide/install-mke-image.html
+$ docker image pull mirantis/ucp:3.4.0
+$ ip route | grep eth0.*src | awk '{print $9}'
+
+$ docker container run --rm -it --name ucp -v /var/run/docker.sock:/var/run/docker.sock mirantis/ucp:3.4.0 install --host-address $( ip route | grep eth0.*src | awk '{ print $9 }' ) --interactive --force-minimums 
+
+Admin Username: admin
+Admin Password: adminadmin
+Confirm Admin Password: adminadmin
+Adress: press enter
+
+----After installation, go to browser to access the graphical dashboard
+https://172.31.14.91
+Admin Username: admin
+Admin Password: adminadmin
+
+----Next
+Shared Resources
+NODES
+ADD NODE
+then scroll down and copy the below command and paste on your Worker Nodes to join the WN with the Master:
+$ docker swarm join --token SWMTKN-1-44zp9qdndapny2drv9mqsjzy5mz1izjjht71xn5i6pwkl54d4h-42pjip6fuu8ol0lqdl10l9t7o 172.31.31.162:2377
+
+In case it throw error of already joined, then use the below command"
+$ sudo docker swarm leave --force
+
+----Next
+Shared Resources
+Stacks
+Create Stacks
+Give it a name
+Swarm Service
+Next
+Paste your yaml file
+Create
+
+
+
+----------------------------------------
+
+from Sebastian Colomar (Faculty) to All Participants:
+https://github.com/academiaonline/simplilearn-phpinfo
+from Sebastian Colomar (Faculty) to All Participants:
+https://github.com/academiaonline/simplilearn-phpinfo/blob/docker/Dockerfile
+from Sebastian Colomar (Faculty) to All Participants:
+https://github.com/academiaonline/simplilearn-phpinfo/blob/docker/.github/workflows/whatever.yaml
+https://hub.docker.com/r/academiaonline/simplilearn-phpinfo
+
+
+DOCKER
+DOCKERFILE
+DOCKER-COMPOSE
+DOCKER SWARM
+docker stack deploy
+docker stack services
+docker stack ps
+docker run
+docker build
+docker push
+docker pull
+docker inspect
+docker history
+docker diff
+docker commit
+docker history
+
+
+
+Red Hat OpenShift
+https://learn.openshift.com/playgrounds/
+
+cd
+git clone https://github.com/academiaonline/simplilearn-dockercoins
+ cd simplilearn-dockercoins/
+ git checkout docker
+kubectl apply -f etc/kubernetes/manifests/
+kubectl get all
+kubectl logs service/phpinfo
+kubectl logs service/redis     
+kubectl logs replicaset.apps/worker-rs
+
+from Sebastian Colomar (Faculty) to All Participants:
+ADMINISTRATOR
+from Sebastian Colomar (Faculty) to All Participants:
+NETWORKING
+from Sebastian Colomar (Faculty) to All Participants:
+ROUTES
+
+
+THREE PLATFORMS OF CONTAINER ORCHESTRATION
+
+DOCKER SWARM
+MIRANTIS KUBERNETES ENGINE
+RED HAT OPENSHIFT
+
+
+
+DEPLOYMENT ON DOCKER SWARM
+from Sebastian Colomar (Faculty) to All Participants:
+https://labs.play-with-docker.com/
+from Sebastian Colomar (Faculty) to All Participants:
+docker swarm init --advertise-addr 192.168.0.8
+from Sebastian Colomar (Faculty) to All Participants:
+docker swarm join-token manager
+from Manuel Canelon to All Participants:
+if you just did a docker swarm init wouldnt it work too? or do those machines have multiple ips?
+from Sebastian Colomar (Faculty) to All Participants:
+docker node ls
+from Sebastian Colomar (Faculty) to All Participants:
+git clone https://github.com/academiaonline/simplilearn-phpinfo
+from Sebastian Colomar (Faculty) to All Participants:
+cd simplilearn-phpinfo/
+from Sebastian Colomar (Faculty) to All Participants:
+git checkout docker
+from Sebastian Colomar (Faculty) to All Participants:
+docker stack deploy -c etc/swarm/manifests/docker-compose.yaml phpinfo
+from Sebastian Colomar (Faculty) to All Participants:
+cd
+from Sebastian Colomar (Faculty) to All Participants:
+git clone https://github.com/academiaonline/simplilearn-dockercoins
+from Sebastian Colomar (Faculty) to All Participants:
+cd simplilearn-dockercoins/
+from Sebastian Colomar (Faculty) to All Participants:
+git checkout docker
+from Sebastian Colomar (Faculty) to All Participants:
+sed -i s/80:/8000:/ etc/swarm/manifests/docker-compose.yaml 
+from Sebastian Colomar (Faculty) to All Participants:
+docker stack deploy -c etc/swarm/manifests/docker-compose.yaml dockercoins
